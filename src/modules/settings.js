@@ -76,9 +76,10 @@ const Settings = {
                         <input id="set-or-mm" class="form-input" placeholder="nvidia/nemotron-nano-12b-v2-vl:free" value="${localStorage.getItem('openrouter_multimodal_model') || ''}" />
                     </div>
 
-                    <div style="display:flex; gap:var(--space-2);">
+                    <div style="display:flex; gap:var(--space-2); flex-wrap:wrap;">
                         <button class="btn btn-primary" onclick="Settings.saveAI()">💾 Save AI Settings</button>
                         <button class="btn btn-secondary" onclick="Settings.testAI()">🧪 Test AI</button>
+                        <button class="btn btn-secondary" onclick="Settings.resetAI()" title="Clear local key and use hardcoded default">🔄 Reset to Default</button>
                     </div>
                 </div>
 
@@ -205,6 +206,15 @@ const Settings = {
             window.APP_CONFIG.PROXY_URL = proxy;
             window.App.showToast('Proxy URL saved!', 'success');
         }
+    },
+
+    resetAI() {
+        localStorage.removeItem('openrouter_api_key');
+        localStorage.removeItem('openrouter_model');
+        localStorage.removeItem('openrouter_multimodal_model');
+        if (GeminiService.init) GeminiService.init();
+        window.App.renderModule('settings'); // Re-render to show defaults
+        window.App.showToast('AI Settings reset to hardcoded defaults', 'info');
     }
 };
 
