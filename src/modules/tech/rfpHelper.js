@@ -13,8 +13,10 @@ const RfpHelper = {
             <div class="glass-card module-panel">
                 <h2>📄 RFP / Questionnaire</h2>
                 <div class="form-group" style="margin-bottom:var(--space-4)">
-                    <label class="form-label">Upload RFP (Excel/CSV)</label>
-                    <input type="file" id="rfp-file" class="form-input" accept=".xlsx,.xls,.csv" onchange="RfpHelper.handleUpload()" />
+                    <div style="display:flex; align-items:center; gap:var(--space-2); flex-wrap:wrap;">
+                        <input type="file" id="rfp-file" class="form-input" accept=".xlsx,.xls,.csv" disabled style="flex:1; opacity:0.6; cursor:not-allowed;" />
+                        <span style="color:#f87171; font-size:var(--font-xs); font-weight:600;">⚠️ shaik has disabled the file input , as model run on credits</span>
+                    </div>
                 </div>
                 <div class="form-group" style="margin-bottom:var(--space-4)">
                     <label class="form-label">Or Paste Questions</label>
@@ -28,8 +30,10 @@ Example:
 5. Do you support AMP emails?"></textarea>
                 </div>
                 <div class="form-group" style="margin-bottom:var(--space-4)">
-                    <label class="form-label">Supporting Documents</label>
-                    <input type="file" id="rfp-docs" class="form-input" multiple />
+                    <div style="display:flex; align-items:center; gap:var(--space-2); flex-wrap:wrap;">
+                        <input type="file" id="rfp-docs" class="form-input" multiple disabled style="flex:1; opacity:0.6; cursor:not-allowed;" />
+                        <span style="color:#f87171; font-size:var(--font-xs); font-weight:600;">⚠️ shaik has disabled the file input , as model run on credits</span>
+                    </div>
                 </div>
                 <button class="btn btn-primary btn-lg" onclick="RfpHelper.answerRFP()" style="width:100%">
                     📄 Answer RFP

@@ -31,8 +31,10 @@ Examples:
                     </select>
                 </div>
                 <div class="form-group" style="margin-bottom:var(--space-4)">
-                    <label class="form-label">Attachments</label>
-                    <input type="file" id="ea-file" class="form-input" multiple />
+                    <div style="display:flex; align-items:center; gap:var(--space-2); flex-wrap:wrap;">
+                        <input type="file" id="ea-file" class="form-input" multiple disabled style="flex:1; opacity:0.6; cursor:not-allowed;" />
+                        <span style="color:#f87171; font-size:var(--font-xs); font-weight:600;">⚠️ shaik has disabled the file input , as model run on credits</span>
+                    </div>
                 </div>
                 <button class="btn btn-primary btn-lg" onclick="EmailAssist.generate()" style="width:100%">
                     ✉️ Generate Email

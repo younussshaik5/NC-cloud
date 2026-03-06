@@ -36,8 +36,10 @@ Examples:
                     </select>
                 </div>
                 <div class="form-group" style="margin-bottom:var(--space-4)">
-                    <label class="form-label">Attachments</label>
-                    <input type="file" id="ge-file" class="form-input" multiple />
+                    <div style="display:flex; align-items:center; gap:var(--space-2); flex-wrap:wrap;">
+                        <input type="file" id="ge-file" class="form-input" multiple disabled style="flex:1; opacity:0.6; cursor:not-allowed;" />
+                        <span style="color:#f87171; font-size:var(--font-xs); font-weight:600;">⚠️ shaik has disabled the file input , as model run on credits</span>
+                    </div>
                 </div>
                 <button class="btn btn-primary btn-lg" onclick="GroundingEngine.search()" style="width:100%">
                     🧠 Research
@@ -98,26 +100,19 @@ Format your response with:
 - Source citations where possible
 - Actionable takeaways for a Solution Presales Consultant`;
 
-        // Prefer Gemini with Google Search grounding if available
-        const useGrounding = GeminiService.hasGoogleAIKey?.() || false;
-
-        let result;
-        if (useGrounding && GeminiService.generateWithGrounding) {
-            result = await GeminiService.generateWithGrounding(query, systemInstruction, attachments);
-        } else {
-            result = await GeminiService.generateContent(
-                `Research the following topic and provide a comprehensive, well-structured answer:\n\n${query}`,
-                systemInstruction,
-                attachments
-            );
-        }
+        // All research now flows through OpenRouter
+        const result = await GeminiService.generateContent(
+            `Research the following topic and provide a comprehensive, well-structured answer:\n\n${query}`,
+            systemInstruction,
+            attachments
+        );
 
         const badge = window.App.getAiBadge(result);
 
         if (result.success) {
             resultEl.innerHTML = `
                 <div class="result-body">${window.MarkdownRenderer.parse(result.text)}</div>
-                <div class="result-meta">${badge}${useGrounding ? ' 🌐 Web Grounded' : ''}</div>
+                <div class="result-meta">${badge}</div>
             `;
         } else {
             resultEl.innerHTML = `

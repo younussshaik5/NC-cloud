@@ -14,7 +14,6 @@ const GeminiService = {
         this.multimodalModel = localStorage.getItem('openrouter_multimodal_model') || window.APP_CONFIG?.OPENROUTER_MULTIMODAL_MODEL || 'nvidia/nemotron-nano-12b-v2-vl:free';
         this.secondaryMultimodalModel = localStorage.getItem('openrouter_multimodal_secondary_model') || window.APP_CONFIG?.OPENROUTER_MULTIMODAL_SECONDARY_MODEL || 'qwen/qwen3-vl-30b-a3b-instruct';
         this.tertiaryMultimodalModel = localStorage.getItem('openrouter_multimodal_tertiary_model') || window.APP_CONFIG?.OPENROUTER_MULTIMODAL_TERTIARY_MODEL || 'google/gemma-3-27b-it:free';
-        this.googleAIKey = localStorage.getItem('google_ai_key') || window.APP_CONFIG?.GOOGLE_AI_KEY || null;
     },
 
     setOpenRouterKey(key) {
@@ -45,12 +44,6 @@ const GeminiService = {
         this.tertiaryMultimodalModel = model;
         localStorage.setItem('openrouter_multimodal_tertiary_model', model);
         if (window.APP_CONFIG) window.APP_CONFIG.OPENROUTER_MULTIMODAL_TERTIARY_MODEL = model;
-    },
-
-    setGoogleAIKey(key) {
-        this.googleAIKey = key;
-        localStorage.setItem('google_ai_key', key);
-        if (window.APP_CONFIG) window.APP_CONFIG.GOOGLE_AI_KEY = key;
     },
 
     isLiveMode() {
@@ -124,13 +117,9 @@ CROSS-CHECK & GROUNDING INSTRUCTIONS:
                 },
                 body: JSON.stringify({
                     model,
-                    messages,
-                    // Auto-enable OCR for non-multimodal models if needed
-                    provider: {
-                        pdf_engine: 'pdf-text'
-                    }
+                    messages
                 }),
-                signal: AbortSignal.timeout(60000) // 60s timeout
+                signal: AbortSignal.timeout(60000)
             });
 
             if (!response.ok) {
@@ -143,96 +132,45 @@ CROSS-CHECK & GROUNDING INSTRUCTIONS:
             return { success: true, text, source: 'openrouter', model };
         };
 
-        const makeGoogleRequest = async (model) => {
-            const apiKey = this.googleAIKey || window.APP_CONFIG?.GOOGLE_AI_KEY;
-            if (!apiKey) throw new Error('Google AI Key not configured');
-
-            const contents = [];
-            // Google Gemini API structure
-            if (unifiedSystemInstruction) {
-                // Gemini 1.5/2.0 supports system_instruction at root, 
-                // but for simple REST we can prepend to prompt or use 'system' role depending on API version
-            }
-
-            const apiParts = [{ text: prompt }];
-            attachments.forEach(file => {
-                apiParts.push({
-                    inline_data: {
-                        mime_type: file.mimeType,
-                        data: file.data
-                    }
-                });
-            });
-
-            contents.push({ role: 'user', parts: apiParts });
-
-            console.log(`[AI] Using NATIVE Google Gemini: ${model}`);
-
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents }),
-                signal: AbortSignal.timeout(60000) // 60s timeout
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error?.message || response.status);
-            }
-
-            const data = await response.json();
-            const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            return { success: true, text, source: 'google-ai-studio', model };
-        };
-
         const primaryModel = this.openRouterModel || 'google/gemma-3-27b-it:free';
         const multimodal1 = this.multimodalModel || 'nvidia/nemotron-nano-12b-v2-vl:free';
-        const multimodal2 = this.secondaryMultimodalModel || 'qwen/qwen3-vl-30b-a3b-instruct';
+        const multimodal2 = this.secondaryMultimodalModel || 'google/gemini-2.5-flash-lite';
+        const multimodal3 = this.tertiaryMultimodalModel || 'google/gemini-2.5-flash-lite';
 
-        // Create a list of models to try in EXACT ORDER requested by user:
-        // 1. Gemma (Text Primary)
-        // 2. Nvidia (Multimodal Primary)
-        // 3. Qwen (Multimodal Secondary)
-        // 4. Native Google (Expert Fallback)
+        // Chain of models to try (All via OpenRouter)
         const retryChain = [
-            { id: primaryModel, provider: 'openrouter' },
-            { id: multimodal1, provider: 'openrouter' },
-            { id: multimodal2, provider: 'openrouter' },
-            { id: 'google/gemini-2.5-flash-lite', provider: 'openrouter' }
+            primaryModel,
+            multimodal1,
+            multimodal2,
+            multimodal3,
+            'google/gemini-2.5-flash-lite' // Ultimate last resort
         ];
 
-        // Deduplicate in case any models are the same
-        const uniqueChain = [];
-        const seen = new Set();
-        for (const m of retryChain) {
-            if (!seen.has(m.id)) {
-                uniqueChain.push(m);
-                seen.add(m.id);
-            }
-        }
+        // Deduplicate and filter out empty strings
+        const uniqueChain = [...new Set(retryChain)].filter(Boolean);
 
         let lastError = null;
-        console.log(`[AI] Starting generation with chain: ${uniqueChain.map(m => m.id).join(' -> ')}`);
+        console.log(`[AI] Starting OpenRouter generation with chain: ${uniqueChain.join(' -> ')}`);
+
         for (const modelToTry of uniqueChain) {
             try {
-                if (modelToTry.id !== primaryModel) {
-                    console.warn(`[AI] Attempting fallback to ${modelToTry.id} (${modelToTry.provider})...`);
+                if (modelToTry !== primaryModel) {
+                    console.warn(`[AI] Attempting fallback to ${modelToTry}...`);
                 }
-
-                if (modelToTry.provider === 'google') {
-                    return await makeGoogleRequest(modelToTry.id);
-                } else {
-                    return await makeRequest(modelToTry.id);
-                }
+                return await makeRequest(modelToTry);
             } catch (error) {
-                console.error(`[AI] Model ${modelToTry.id} failed:`, error.message);
+                console.error(`[AI] Model ${modelToTry} failed:`, error.message);
                 lastError = error;
+                // If it's a 401/403, don't bother retrying
+                if (error.message.includes('401') || error.message.includes('403') || error.message.includes('Unauthorized')) {
+                    break;
+                }
             }
         }
 
         return {
             success: false,
-            error: `All AI models failed. Attempts: ${uniqueChain.map(m => m.id).join(' -> ')}. Last error: ${lastError?.message}`
+            error: `AI failed via OpenRouter. Attempts: ${uniqueChain.join(' -> ')}. Last error: ${lastError?.message}`
         };
     }
 };

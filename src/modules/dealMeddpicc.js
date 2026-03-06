@@ -39,8 +39,10 @@ Include details about:
 • Current martech stack and migration concerns"></textarea>
                     </div>
                     <div class="form-group" style="margin-bottom:var(--space-4)">
-                         <label class="form-label">Attachments (Account Plan, Org Chart)</label>
-                         <input type="file" id="meddpicc-file" class="form-input" multiple />
+                         <div style="display:flex; align-items:center; gap:var(--space-2); flex-wrap:wrap;">
+                             <input type="file" id="meddpicc-file" class="form-input" multiple disabled style="flex:1; opacity:0.6; cursor:not-allowed;" />
+                             <span style="color:#f87171; font-size:var(--font-xs); font-weight:600;">⚠️ shaik has disabled the file input , as model run on credits</span>
+                         </div>
                     </div>
                     <button class="btn btn-primary btn-lg" onclick="DealMeddpicc.analyze()" style="width:100%">
                         📊 Analyze Deal

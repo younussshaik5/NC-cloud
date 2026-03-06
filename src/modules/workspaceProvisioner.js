@@ -27,8 +27,17 @@ const WorkspaceProvisioner = {
                 <h1>🏗️ Workspace Provisioner</h1>
                 <p class="module-desc">AI-powered Netcore Cloud CE workspace setup — from discovery to full provisioning via API.</p>
             </div>
-            <div id="wp-content">
-                ${this.renderPhase()}
+            
+            <div class="glass-card" style="margin-top:var(--space-8); padding:var(--space-12); text-align:center; display:flex; flex-direction:column; align-items:center; gap:var(--space-6); background:rgba(0,0,0,0.3); border:1px dashed var(--border-default);">
+                <div style="font-size:4rem; filter:drop-shadow(0 0 20px var(--accent-primary-glow));">🏗️</div>
+                <div style="max-width:500px;">
+                    <h2 style="font-size:var(--font-2xl); margin-bottom:var(--space-2); background:var(--accent-gradient); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">its under building</h2>
+                    <p style="color:var(--text-tertiary); font-size:var(--font-lg); line-height:1.6;">
+                        This agent is currently being optimized for Netcore Cloud's advanced CE APIs. 
+                        We are building a more powerful automated provisioning engine for your demos.
+                    </p>
+                </div>
+                <div class="loader-dots"><span></span><span></span><span></span></div>
             </div>
         </div>`;
     },
@@ -50,7 +59,10 @@ const WorkspaceProvisioner = {
                     <button class="btn btn-primary" onclick="WorkspaceProvisioner.send()">Send</button>
                 </div>
                 <div class="form-group" style="margin-top:var(--space-3)">
-                    <input type="file" id="wp-file" class="form-input" multiple onchange="WorkspaceProvisioner.handleFileSelect()" />
+                    <div style="display:flex; align-items:center; gap:var(--space-2); flex-wrap:wrap;">
+                        <input type="file" id="wp-file" class="form-input" multiple disabled style="flex:1; opacity:0.6; cursor:not-allowed;" />
+                        <span style="color:#f87171; font-size:var(--font-xs); font-weight:600;">⚠️ shaik has disabled the file input , as model run on credits</span>
+                    </div>
                 </div>
             </div>
             <div class="glass-card module-panel">

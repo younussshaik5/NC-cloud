@@ -39,13 +39,28 @@ const MarkdownRenderer = {
             return `__INLINE_CODE_${index}__`;
         });
 
-        // 3. Tables — parse BEFORE escaping so | characters are intact
+        // 3. Tables — handle alignment markers and robust parsing
         html = html.replace(/(?:^|\n)\|(.+)\|\n\|([-:| ]+)\|\n((?:\|.*\|(?:\n|$))*)/gm, (match, headerRow, separatorRow, bodyRows) => {
-            const headers = headerRow.split('|').filter(c => c.trim()).map(c => `<th>${c.trim()}</th>`).join('');
+            const alignments = separatorRow.split('|').filter(c => c.trim()).map(c => {
+                const trimmed = c.trim();
+                if (trimmed.startsWith(':') && trimmed.endsWith(':')) return 'center';
+                if (trimmed.endsWith(':')) return 'right';
+                return 'left';
+            });
+
+            const headers = headerRow.split('|').filter(c => c.trim()).map((c, i) => {
+                const style = alignments[i] ? ` style="text-align:${alignments[i]}"` : '';
+                return `<th${style}>${c.trim()}</th>`;
+            }).join('');
+
             const body = bodyRows.trim().split('\n').map(row => {
-                const cells = row.split('|').filter(c => c.trim()).map(c => `<td>${c.trim()}</td>`).join('');
+                const cells = row.split('|').filter(c => c.trim()).map((c, i) => {
+                    const style = alignments[i] ? ` style="text-align:${alignments[i]}"` : '';
+                    return `<td${style}>${c.trim()}</td>`;
+                }).join('');
                 return `<tr>${cells}</tr>`;
             }).join('');
+
             return `\n<div class="table-container"><table class="markdown-table"><thead><tr>${headers}</tr></thead><tbody>${body}</tbody></table></div>\n`;
         });
 

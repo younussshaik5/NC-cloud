@@ -222,13 +222,81 @@ const App = {
         });
     },
 
-    // ---- Copy to Clipboard (Rich Text Support) ----
+    // ---- Copy to Clipboard (Rich Text with Inlined Styles) ----
     copyToClipboard(param) {
         const el = typeof param === 'string' ? document.getElementById(param) : param;
         if (!el) return;
 
+        // Clone element to manipulate and inline styles without affecting UI
+        const clone = el.cloneNode(true);
+
+        // Strip UI-only elements (like copy buttons or badges)
+        clone.querySelectorAll('.result-actions, .ai-badge, .copy-btn').forEach(node => node.remove());
+
+        // CSS Variables / Theme values for inlining
+        const theme = {
+            bg: '#0d1117',
+            text: '#e6edf3',
+            secondary: '#7d8590',
+            accent: '#0066FF',
+            border: '#30363d',
+            tableHeader: 'rgba(255,255,255,0.1)',
+            font: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+        };
+
+        // Inline critical styles for Doc compatibility
+        const inlineStyles = (root) => {
+            // Global fonts
+            root.style.fontFamily = theme.font;
+            root.style.color = theme.text;
+
+            // Tables
+            root.querySelectorAll('table').forEach(table => {
+                table.style.width = '100%';
+                table.style.borderCollapse = 'collapse';
+                table.style.margin = '20px 0';
+                table.style.border = `1px solid ${theme.border}`;
+            });
+
+            root.querySelectorAll('th').forEach(th => {
+                th.style.backgroundColor = theme.tableHeader;
+                th.style.color = '#ffffff';
+                th.style.padding = '12px';
+                th.style.textAlign = 'left';
+                th.style.border = `1px solid ${theme.border}`;
+                th.style.fontWeight = 'bold';
+            });
+
+            root.querySelectorAll('td').forEach(td => {
+                td.style.padding = '12px';
+                td.style.border = `1px solid ${theme.border}`;
+                td.style.verticalAlign = 'top';
+            });
+
+            // Headers
+            root.querySelectorAll('h1, h2, h3').forEach(h => {
+                h.style.color = '#ffffff';
+                h.style.marginTop = '24px';
+                h.style.marginBottom = '16px';
+                h.style.fontWeight = '700';
+            });
+
+            // Lists
+            root.querySelectorAll('ul, ol').forEach(list => {
+                list.style.paddingLeft = '24px';
+                list.style.marginBottom = '16px';
+            });
+
+            // Bold
+            root.querySelectorAll('strong').forEach(b => {
+                b.style.color = '#ffffff';
+            });
+        };
+
+        inlineStyles(clone);
+
         const plainText = el.innerText;
-        const htmlContent = el.innerHTML;
+        const htmlContent = clone.innerHTML;
 
         // Modern Clipboard API
         if (navigator.clipboard && window.ClipboardItem) {
@@ -240,7 +308,7 @@ const App = {
             });
 
             navigator.clipboard.write([item]).then(() => {
-                this.showToast('Copied to clipboard (with formatting)!', 'success');
+                this.showToast('Copied with premium formatting!', 'success');
             }).catch(err => {
                 console.error('Clipboard error:', err);
                 this.fallbackCopy(el);

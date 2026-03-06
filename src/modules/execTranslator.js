@@ -36,8 +36,10 @@ const ExecTranslator = {
                     <input id="exec-industry" class="form-input" placeholder="e.g., E-commerce, BFSI, Gaming, EdTech" />
                 </div>
                 <div class="form-group" style="margin-bottom:var(--space-4)">
-                    <label class="form-label">Attachments (Technical Spec, Architecture)</label>
-                    <input type="file" id="exec-file" class="form-input" multiple />
+                    <div style="display:flex; align-items:center; gap:var(--space-2); flex-wrap:wrap;">
+                        <input type="file" id="exec-file" class="form-input" multiple disabled style="flex:1; opacity:0.6; cursor:not-allowed;" />
+                        <span style="color:#f87171; font-size:var(--font-xs); font-weight:600;">⚠️ shaik has disabled the file input , as model run on credits</span>
+                    </div>
                 </div>
                 <button class="btn btn-primary btn-lg" onclick="ExecTranslator.translate()" style="width:100%">
                     🎤 Translate for Executive
