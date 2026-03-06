@@ -18,16 +18,51 @@ const TemplateGenerator = {
                 <p class="module-desc">AI-powered email templates, landing pages, and in-app message designs for Netcore Cloud demos.</p>
             </div>
 
-            <div class="glass-card" style="margin-top:var(--space-8); padding:var(--space-12); text-align:center; display:flex; flex-direction:column; align-items:center; gap:var(--space-6); background:rgba(0,0,0,0.3); border:1px dashed var(--border-default);">
-                <div style="font-size:4rem; filter:drop-shadow(0 0 20px var(--accent-primary-glow));">🌐</div>
-                <div style="max-width:500px;">
-                    <h2 style="font-size:var(--font-2xl); margin-bottom:var(--space-2); background:var(--accent-gradient); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">its under building</h2>
-                    <p style="color:var(--text-tertiary); font-size:var(--font-lg); line-height:1.6;">
-                        Our design agent is learning Netcore Cloud's premium template standards. 
-                        Soon you'll be able to generate stunning, high-conversion templates with one click.
-                    </p>
+            <div class="module-grid">
+                <div class="glass-card module-panel">
+                    <h2>💬 Design Assistant</h2>
+                    <div id="tg-chat" class="chat-container" style="height:400px; overflow-y:auto; margin-bottom:var(--space-4); padding:var(--space-3); background:rgba(0,0,0,0.2); border-radius:var(--radius-md);"></div>
+                    
+                    <div class="form-group" style="margin-bottom:var(--space-4)">
+                        <label class="form-label">Template Type</label>
+                        <select id="tg-type" class="form-input">
+                            <option>Email Template</option>
+                            <option>AMP Email</option>
+                            <option>Landing Page</option>
+                            <option>In-App Message</option>
+                            <option>Web Push Notification</option>
+                        </select>
+                    </div>
+
+                    <div style="display:flex; gap:var(--space-2)">
+                        <input id="tg-input" class="form-input" placeholder="Describe the design you want..." style="flex:1" onkeydown="if(event.key==='Enter') TemplateGenerator.send()" />
+                        <button class="btn btn-primary" onclick="TemplateGenerator.send()">Generate</button>
+                    </div>
+
+                    <div class="form-group" style="margin-top:var(--space-3)">
+                        <div style="display:flex; align-items:center; gap:var(--space-2); flex-wrap:wrap;">
+                            <input type="file" id="tg-file" class="form-input" multiple disabled style="flex:1; opacity:0.6; cursor:not-allowed;" />
+                            <span style="color:#f87171; font-size:var(--font-xs); font-weight:600;">⚠️ shaik has disabled the file input , as model run on credits</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="loader-dots"><span></span><span></span><span></span></div>
+
+                <div class="glass-card module-panel">
+                    <div class="result-header">
+                        <h2>🎨 Preview</h2>
+                        <div class="result-actions">
+                            <button class="btn btn-sm btn-secondary" onclick="TemplateGenerator.copyCode()">📋 Copy HTML</button>
+                            <button class="btn btn-sm btn-secondary" onclick="TemplateGenerator.download()">📥 Download</button>
+                        </div>
+                    </div>
+                    <div id="tg-preview" class="result-content" style="min-height:500px; padding:0; overflow:hidden;">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🎨</div>
+                            <h3>No template generated</h3>
+                            <p>Describe your design requirements on the left to see the live preview here.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>`;
     },
