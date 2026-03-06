@@ -47,10 +47,8 @@ const App = {
 
     init() {
         this.initSidebar();
-        this.initBanner();
         this.initServices();
         this.navigateTo(this.currentModule);
-        this.updateAuthState();
 
         // Restore sidebar state
         if (localStorage.getItem('sidebar-collapsed') === 'true') {
@@ -111,16 +109,6 @@ const App = {
         }, 150);
     },
 
-    // ---- Banner ----
-    initBanner() {
-        const dismiss = document.getElementById('dismiss-banner');
-        if (dismiss) {
-            dismiss.addEventListener('click', () => {
-                document.getElementById('demo-banner').style.display = 'none';
-            });
-        }
-    },
-
     // ---- Services Initialization ----
     initServices() {
         // Restore saved Netcore credentials
@@ -144,25 +132,6 @@ const App = {
         const oauthClient = localStorage.getItem('google_client_id');
         if (oauthClient) {
             AuthService.setClientId(oauthClient);
-        }
-    },
-
-    // ---- Auth State ----
-    updateAuthState() {
-        const isLive = GeminiService.isLiveMode();
-        const demoIndicator = document.getElementById('demo-mode-indicator');
-        const demoBanner = document.getElementById('demo-banner');
-
-        if (demoIndicator) {
-            if (isLive) {
-                demoIndicator.innerHTML = '<span class="demo-dot" style="background:var(--success)"></span><span class="demo-text">AI Ready</span>';
-            } else {
-                demoIndicator.innerHTML = '<span class="demo-dot" style="background:var(--danger)"></span><span class="demo-text">AI Unconfigured</span>';
-            }
-        }
-
-        if (demoBanner) {
-            demoBanner.style.display = 'none'; // Always hide the demo banner
         }
     },
 

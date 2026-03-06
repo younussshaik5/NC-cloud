@@ -76,12 +76,6 @@ const Settings = {
                         <input id="set-or-mm" class="form-input" placeholder="nvidia/nemotron-nano-12b-v2-vl:free" value="${localStorage.getItem('openrouter_multimodal_model') || ''}" />
                     </div>
 
-                    <h3 style="color:var(--text-secondary); margin-bottom:var(--space-3);">Google AI Studio (Fallback)</h3>
-                    <div class="form-group" style="margin-bottom:var(--space-4)">
-                        <label class="form-label">API Key</label>
-                        <input id="set-google-key" class="form-input" type="password" placeholder="AIza..." value="${localStorage.getItem('google_ai_key') || ''}" />
-                    </div>
-
                     <button class="btn btn-primary" onclick="Settings.saveAI()">💾 Save AI Settings</button>
                 </div>
 
@@ -133,7 +127,7 @@ const Settings = {
 
         NetcoreService.setCredentials(apiKey, emailKey, panel);
         window.App.showToast('Netcore Cloud credentials saved!', 'success');
-        window.App.updateAuthState();
+
     },
 
     async testNetcore() {
@@ -158,25 +152,23 @@ const Settings = {
         document.getElementById('set-nc-email').value = '';
         document.getElementById('set-nc-panel').value = '';
         window.App.showToast('Netcore credentials cleared', 'info');
-        window.App.updateAuthState();
+
     },
 
     saveAI() {
         const orKey = document.getElementById('set-or-key').value.trim();
         const orModel = document.getElementById('set-or-model').value.trim();
         const orMM = document.getElementById('set-or-mm').value.trim();
-        const googleKey = document.getElementById('set-google-key').value.trim();
 
         if (orKey) localStorage.setItem('openrouter_api_key', orKey);
         if (orModel) localStorage.setItem('openrouter_model', orModel);
         if (orMM) localStorage.setItem('openrouter_multimodal_model', orMM);
-        if (googleKey) localStorage.setItem('google_ai_key', googleKey);
 
         // Reinitialize GeminiService
         if (GeminiService.init) GeminiService.init();
 
         window.App.showToast('AI settings saved! Refresh may be needed.', 'success');
-        window.App.updateAuthState();
+
     },
 
     saveSlack() {

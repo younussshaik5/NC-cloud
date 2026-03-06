@@ -198,7 +198,7 @@ CROSS-CHECK & GROUNDING INSTRUCTIONS:
             { id: primaryModel, provider: 'openrouter' },
             { id: multimodal1, provider: 'openrouter' },
             { id: multimodal2, provider: 'openrouter' },
-            { id: 'gemini-3-flash-preview', provider: 'google' }
+            { id: 'google/gemini-2.5-flash-lite', provider: 'openrouter' }
         ];
 
         // Deduplicate in case any models are the same
