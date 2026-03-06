@@ -76,7 +76,10 @@ const Settings = {
                         <input id="set-or-mm" class="form-input" placeholder="nvidia/nemotron-nano-12b-v2-vl:free" value="${localStorage.getItem('openrouter_multimodal_model') || ''}" />
                     </div>
 
-                    <button class="btn btn-primary" onclick="Settings.saveAI()">💾 Save AI Settings</button>
+                    <div style="display:flex; gap:var(--space-2);">
+                        <button class="btn btn-primary" onclick="Settings.saveAI()">💾 Save AI Settings</button>
+                        <button class="btn btn-secondary" onclick="Settings.testAI()">🧪 Test AI</button>
+                    </div>
                 </div>
 
                 <!-- Slack -->
@@ -123,9 +126,11 @@ const Settings = {
         const emailKey = document.getElementById('set-nc-email').value.trim();
         const panel = document.getElementById('set-nc-panel').value.trim();
 
-        if (!apiKey) { window.App.showToast('CE API Key is required', 'warning'); return; }
+        if (apiKey) localStorage.setItem('netcore_ce_api_key', apiKey);
+        if (emailKey) localStorage.setItem('netcore_email_api_key', emailKey);
+        if (panel) localStorage.setItem('netcore_panel_url', panel);
 
-        NetcoreService.setCredentials(apiKey, emailKey, panel);
+        if (NetcoreService.init) NetcoreService.init();
         window.App.showToast('Netcore Cloud credentials saved!', 'success');
     },
 
@@ -165,7 +170,23 @@ const Settings = {
         // Reinitialize GeminiService
         if (GeminiService.init) GeminiService.init();
 
-        window.App.showToast('AI settings saved! Refresh may be needed.', 'success');
+        window.App.showToast('AI settings saved!', 'success');
+    },
+
+    async testAI() {
+        if (!GeminiService.isLiveMode()) {
+            window.App.showToast('Save an OpenRouter API key first', 'warning');
+            return;
+        }
+
+        window.App.showToast('Testing AI connection...', 'info');
+        const result = await GeminiService.generateContent('Say hello!', 'You are a testing assistant.');
+
+        if (result.success) {
+            window.App.showToast('✅ AI Connection Success! (Model: ' + result.model + ')', 'success');
+        } else {
+            window.App.showToast('❌ AI Connection Failed: ' + result.error, 'danger');
+        }
     },
 
     saveSlack() {
