@@ -12,15 +12,8 @@ const GeminiService = {
         this.openRouterKey = localStorage.getItem('openrouter_api_key') || window.APP_CONFIG?.OPENROUTER_API_KEY || null;
         this.openRouterModel = localStorage.getItem('openrouter_model') || window.APP_CONFIG?.OPENROUTER_MODEL || 'google/gemma-3-27b-it:free';
         this.multimodalModel = localStorage.getItem('openrouter_multimodal_model') || window.APP_CONFIG?.OPENROUTER_MULTIMODAL_MODEL || 'nvidia/nemotron-nano-12b-v2-vl:free';
-        this.secondaryMultimodalModel = localStorage.getItem('openrouter_multimodal_secondary_model') || window.APP_CONFIG?.OPENROUTER_MULTIMODAL_SECONDARY_MODEL || 'google/gemini-2.0-flash-lite-001';
-        this.tertiaryMultimodalModel = localStorage.getItem('openrouter_multimodal_tertiary_model') || window.APP_CONFIG?.OPENROUTER_MULTIMODAL_TERTIARY_MODEL || 'google/gemini-flash-1.5';
-        this.googleAIKey = localStorage.getItem('google_ai_key') || window.APP_CONFIG?.GOOGLE_AI_KEY || null;
-    },
-
-    setGoogleAIKey(key) {
-        this.googleAIKey = key;
-        localStorage.setItem('google_ai_key', key);
-        if (window.APP_CONFIG) window.APP_CONFIG.GOOGLE_AI_KEY = key;
+        this.secondaryMultimodalModel = localStorage.getItem('openrouter_multimodal_secondary_model') || window.APP_CONFIG?.OPENROUTER_MULTIMODAL_SECONDARY_MODEL || 'google/gemini-2.5-flash-lite';
+        this.tertiaryMultimodalModel = localStorage.getItem('openrouter_multimodal_tertiary_model') || window.APP_CONFIG?.OPENROUTER_MULTIMODAL_TERTIARY_MODEL || 'google/gemini-2.5-flash-lite';
     },
 
     setOpenRouterKey(key) {
@@ -139,64 +132,13 @@ CROSS-CHECK & GROUNDING INSTRUCTIONS:
             return { success: true, text, source: 'openrouter', model };
         };
 
-        const makeGoogleRequest = async (prompt, attachments) => {
-            const googleKey = this.googleAIKey || window.APP_CONFIG?.GOOGLE_AI_KEY;
-            if (!googleKey) throw new Error('Safety Backup Key Missing. Please add a Gemini API Key in Settings > Google AI Studio.');
-
-            console.log(`[AI] Attempting Safety Fallback: Native Google Gemini...`);
-
-            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${googleKey}`;
-
-            const contents = [];
-            const parts = [{ text: typeof prompt === 'string' ? prompt : JSON.stringify(prompt) }];
-
-            if (attachments?.length > 0) {
-                attachments.forEach(file => {
-                    parts.push({
-                        inlineData: {
-                            mimeType: file.mimeType,
-                            data: file.data
-                        }
-                    });
-                });
-            }
-
-            contents.push({ parts });
-
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents,
-                    systemInstruction: { parts: [{ text: unifiedSystemInstruction }] }
-                }),
-                signal: AbortSignal.timeout(30000)
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(`Google AI Error: ${errorData.error?.message || response.status}`);
-            }
-
-            const data = await response.json();
-            const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            return { success: true, text, source: 'google-native', model: 'gemini-1.5-flash' };
-        };
-
-        const primaryModel = this.openRouterModel || 'google/gemma-3-27b-it:free';
-        const multimodal1 = this.multimodalModel || 'nvidia/nemotron-nano-12b-v2-vl:free';
-        const multimodal2 = this.secondaryMultimodalModel || 'google/gemini-2.5-flash-lite';
-        const multimodal3 = this.tertiaryMultimodalModel || 'google/gemini-2.5-flash-lite';
-
         // Chain of models to try (All via OpenRouter)
-        // We always include multiple valid paid models as reliable fallbacks
         const retryChain = [
             this.openRouterModel,
             this.multimodalModel,
             this.secondaryMultimodalModel,
             this.tertiaryMultimodalModel,
-            'google/gemini-2.0-flash-lite-001', // Paid Fallback 1 (Low Latency)
-            'google/gemini-flash-1.5'          // Paid Fallback 2 (Stable)
+            'google/gemini-2.5-flash-lite' // Mandatory paid fallback via OpenRouter
         ];
 
         // Deduplicate and filter out empty strings/nulls
@@ -209,30 +151,22 @@ CROSS-CHECK & GROUNDING INSTRUCTIONS:
             try {
                 attemptedModels.push(modelToTry);
                 if (attemptedModels.length > 1) {
-                    console.warn(`[AI] Attempting fallback to ${modelToTry}...`);
+                    console.warn(`[AI] Attempting OpenRouter fallback to ${modelToTry}...`);
                 }
                 return await makeRequest(modelToTry);
             } catch (error) {
-                console.error(`[AI] Model ${modelToTry} failed:`, error.message);
+                console.error(`[AI] OpenRouter Model ${modelToTry} failed:`, error.message);
                 lastError = error;
-                // We DON'T break anymore, even on "User not found" or "Unauthorized", 
-                // because different models on OpenRouter might have different provider permissions.
+                // Continue to next model in chain regardless of error type
             }
         }
 
-        // Final Safety Fallback: Native Google Gemini (using direct API key if available)
-        try {
-            return await makeGoogleRequest(prompt, attachments);
-        } catch (backupError) {
-            console.error(`[AI] Primary chain and Safety Fallback failed.`);
-            return {
-                success: false,
-                error: `AI Generation Failed. 
-Attempts: ${attemptedModels.join(' -> ')} -> Native Gemini.
-Last OpenRouter Error: ${lastError?.message}
-Stack: ${backupError.message}`
-            };
-        }
+        return {
+            success: false,
+            error: `AI Generation Failed via OpenRouter. 
+Attempts: ${attemptedModels.join(' -> ')}
+Last Error: ${lastError?.message}`
+        };
     }
 };
 

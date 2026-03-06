@@ -77,14 +77,6 @@ const Settings = {
                     </div>
 
                     <button class="btn btn-primary" onclick="Settings.saveAI()">💾 Save AI Settings</button>
-
-                    <div class="divider" style="margin:var(--space-4) 0"></div>
-                    
-                    <h3 style="color:var(--text-secondary); margin-bottom:var(--space-3);">Google AI Studio (Safety Backup)</h3>
-                    <div class="form-group" style="margin-bottom:var(--space-4)">
-                        <label class="form-label">Gemini API Key</label>
-                        <input id="set-google-key" class="form-input" type="password" placeholder="AIzaSy..." value="${localStorage.getItem('google_ai_key') || ''}" />
-                    </div>
                 </div>
 
                 <!-- Slack -->
@@ -135,7 +127,6 @@ const Settings = {
 
         NetcoreService.setCredentials(apiKey, emailKey, panel);
         window.App.showToast('Netcore Cloud credentials saved!', 'success');
-
     },
 
     async testNetcore() {
@@ -160,25 +151,21 @@ const Settings = {
         document.getElementById('set-nc-email').value = '';
         document.getElementById('set-nc-panel').value = '';
         window.App.showToast('Netcore credentials cleared', 'info');
-
     },
 
     saveAI() {
         const orKey = document.getElementById('set-or-key').value.trim();
         const orModel = document.getElementById('set-or-model').value.trim();
         const orMM = document.getElementById('set-or-mm').value.trim();
-        const googleKey = document.getElementById('set-google-key').value.trim();
 
         if (orKey) localStorage.setItem('openrouter_api_key', orKey);
         if (orModel) localStorage.setItem('openrouter_model', orModel);
         if (orMM) localStorage.setItem('openrouter_multimodal_model', orMM);
-        if (googleKey) localStorage.setItem('google_ai_key', googleKey);
 
         // Reinitialize GeminiService
         if (GeminiService.init) GeminiService.init();
 
         window.App.showToast('AI settings saved! Refresh may be needed.', 'success');
-
     },
 
     saveSlack() {
