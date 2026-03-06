@@ -1,0 +1,17 @@
+# Dependency directories
+node_modules/
+dist/
+build/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local secrets
+src/env.js
+
+# OS files
+.DS_Store
+Thumbs.db
