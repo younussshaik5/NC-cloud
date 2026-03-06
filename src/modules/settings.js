@@ -65,7 +65,12 @@ const Settings = {
                     <h3 style="color:var(--text-secondary); margin-bottom:var(--space-3);">OpenRouter (Primary)</h3>
                     <div class="form-group" style="margin-bottom:var(--space-3)">
                         <label class="form-label">API Key</label>
-                        <input id="set-or-key" class="form-input" type="password" placeholder="sk-or-..." value="${localStorage.getItem('openrouter_api_key') || ''}" />
+                        <input id="set-or-key" class="form-input" type="password" 
+                            placeholder="${(() => {
+                const key = window.APP_CONFIG?.OPENROUTER_API_KEY || '';
+                return key ? `${key.substring(0, 10)}...${key.substring(key.length - 4)} (Default)` : 'sk-or-...';
+            })()}" 
+                            value="${localStorage.getItem('openrouter_api_key') || ''}" />
                     </div>
                     <div class="form-group" style="margin-bottom:var(--space-3)">
                         <label class="form-label">Text Model</label>
@@ -212,6 +217,9 @@ const Settings = {
         localStorage.removeItem('openrouter_api_key');
         localStorage.removeItem('openrouter_model');
         localStorage.removeItem('openrouter_multimodal_model');
+        localStorage.removeItem('openrouter_multimodal_secondary_model');
+        localStorage.removeItem('openrouter_multimodal_tertiary_model');
+
         if (GeminiService.init) GeminiService.init();
         window.App.renderModule('settings'); // Re-render to show defaults
         window.App.showToast('AI Settings reset to hardcoded defaults', 'info');

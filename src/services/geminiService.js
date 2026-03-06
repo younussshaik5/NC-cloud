@@ -14,13 +14,13 @@ const GeminiService = {
         const hardcodedKey = window.APP_CONFIG?.OPENROUTER_API_KEY;
         const savedKey = localStorage.getItem('openrouter_api_key');
 
-        // Prioritize localStorage if it exists, otherwise use hardcoded
-        this.openRouterKey = savedKey || hardcodedKey || null;
+        // Prioritize hardcoded key to "update everywhere" as requested
+        this.openRouterKey = hardcodedKey || savedKey || null;
 
-        this.openRouterModel = localStorage.getItem('openrouter_model') || window.APP_CONFIG?.OPENROUTER_MODEL || 'google/gemma-3-27b-it:free';
-        this.multimodalModel = localStorage.getItem('openrouter_multimodal_model') || window.APP_CONFIG?.OPENROUTER_MULTIMODAL_MODEL || 'nvidia/nemotron-nano-12b-v2-vl:free';
-        this.secondaryMultimodalModel = localStorage.getItem('openrouter_multimodal_secondary_model') || window.APP_CONFIG?.OPENROUTER_MULTIMODAL_SECONDARY_MODEL || 'google/gemini-2.5-flash-lite';
-        this.tertiaryMultimodalModel = localStorage.getItem('openrouter_multimodal_tertiary_model') || window.APP_CONFIG?.OPENROUTER_MULTIMODAL_TERTIARY_MODEL || 'google/gemini-2.5-flash-lite';
+        this.openRouterModel = window.APP_CONFIG?.OPENROUTER_MODEL || localStorage.getItem('openrouter_model') || 'google/gemma-3-27b-it:free';
+        this.multimodalModel = window.APP_CONFIG?.OPENROUTER_MULTIMODAL_MODEL || localStorage.getItem('openrouter_multimodal_model') || 'nvidia/nemotron-nano-12b-v2-vl:free';
+        this.secondaryMultimodalModel = window.APP_CONFIG?.OPENROUTER_MULTIMODAL_SECONDARY_MODEL || localStorage.getItem('openrouter_multimodal_secondary_model') || 'google/gemini-2.5-flash-lite';
+        this.tertiaryMultimodalModel = window.APP_CONFIG?.OPENROUTER_MULTIMODAL_TERTIARY_MODEL || localStorage.getItem('openrouter_multimodal_tertiary_model') || 'google/gemini-2.5-flash-lite';
 
         const maskedKey = this.openRouterKey ? `${this.openRouterKey.substring(0, 10)}...${this.openRouterKey.substring(this.openRouterKey.length - 4)}` : 'MISSING';
         console.log(`[AI] Service Initialized. Key: ${maskedKey}`);
