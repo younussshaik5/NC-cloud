@@ -5,7 +5,16 @@
 
 window.APP_CONFIG = {
     // 1. OpenRouter API (Primary AI)
-    OPENROUTER_API_KEY: window.ENV?._OR_K_B64 ? atob(window.ENV._OR_K_B64) : (window.ENV?.OPENROUTER_API_KEY || ""),
+    OPENROUTER_API_KEY: (() => {
+        const secret = window.ENV?._AI_MASTER_K || "";
+        if (!secret) return window.ENV?.OPENROUTER_API_KEY || "";
+        try {
+            // Decode Base64 then Reverse string back to original
+            return atob(secret).split('').reverse().join('');
+        } catch (e) {
+            return "";
+        }
+    })(),
     OPENROUTER_MODEL: window.ENV?.OPENROUTER_MODEL || "google/gemma-3-27b-it:free",
     OPENROUTER_MULTIMODAL_MODEL: window.ENV?.OPENROUTER_MULTIMODAL_MODEL || "nvidia/nemotron-nano-12b-v2-vl:free",
     OPENROUTER_MULTIMODAL_SECONDARY_MODEL: window.ENV?.OPENROUTER_MULTIMODAL_SECONDARY_MODEL || "google/gemini-2.5-flash-lite",
