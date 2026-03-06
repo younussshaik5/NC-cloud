@@ -189,46 +189,47 @@ CROSS-CHECK & GROUNDING INSTRUCTIONS:
         const multimodal3 = this.tertiaryMultimodalModel || 'google/gemini-2.5-flash-lite';
 
         // Chain of models to try (All via OpenRouter)
+        // We always include the paid 'google/gemini-2.5-flash-lite' as the reliable fallback
         const retryChain = [
-            primaryModel,
-            multimodal1,
-            multimodal2,
-            multimodal3,
-            'google/gemini-2.5-flash-lite' // Ultimate last resort
+            this.openRouterModel,
+            this.multimodalModel,
+            this.secondaryMultimodalModel,
+            this.tertiaryMultimodalModel,
+            'google/gemini-2.5-flash-lite' // Mandatory paid fallback
         ];
 
-        // Deduplicate and filter out empty strings
+        // Deduplicate and filter out empty strings/nulls
         const uniqueChain = [...new Set(retryChain)].filter(Boolean);
 
         let lastError = null;
-        console.log(`[AI] Starting OpenRouter generation with chain: ${uniqueChain.join(' -> ')}`);
+        let attemptedModels = [];
 
         for (const modelToTry of uniqueChain) {
             try {
-                if (modelToTry !== primaryModel) {
+                attemptedModels.push(modelToTry);
+                if (attemptedModels.length > 1) {
                     console.warn(`[AI] Attempting fallback to ${modelToTry}...`);
                 }
                 return await makeRequest(modelToTry);
             } catch (error) {
                 console.error(`[AI] Model ${modelToTry} failed:`, error.message);
                 lastError = error;
-                // If it's a 401/403/404 (User not found), consider trying native backup immediately if it's an account error
-                if (error.message.includes('401') || error.message.includes('403') || error.message.includes('Unauthorized') || error.message.includes('User not found')) {
-                    break;
-                }
+                // We DON'T break anymore, even on "User not found" or "Unauthorized", 
+                // because different models on OpenRouter might have different provider permissions.
             }
         }
 
-        // Final Safety Fallback: Native Google Gemini
+        // Final Safety Fallback: Native Google Gemini (using direct API key if available)
         try {
             return await makeGoogleRequest(prompt, attachments);
         } catch (backupError) {
             console.error(`[AI] Primary chain and Safety Fallback failed.`);
             return {
                 success: false,
-                error: `AI failed. 
-1. OpenRouter Error: ${lastError?.message}
-2. Backup Gemini Error: ${backupError.message}`
+                error: `AI Generation Failed. 
+Attempts: ${attemptedModels.join(' -> ')} -> Native Gemini.
+Last OpenRouter Error: ${lastError?.message}
+Stack: ${backupError.message}`
             };
         }
     }
