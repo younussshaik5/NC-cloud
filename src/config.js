@@ -10,6 +10,7 @@ window.APP_CONFIG = {
     OPENROUTER_MULTIMODAL_MODEL: window.ENV?.OPENROUTER_MULTIMODAL_MODEL || "nvidia/nemotron-nano-12b-v2-vl:free",
     OPENROUTER_MULTIMODAL_SECONDARY_MODEL: window.ENV?.OPENROUTER_MULTIMODAL_SECONDARY_MODEL || "google/gemini-2.5-flash-lite",
     OPENROUTER_MULTIMODAL_TERTIARY_MODEL: window.ENV?.OPENROUTER_MULTIMODAL_TERTIARY_MODEL || "google/gemini-2.5-flash-lite",
+    GOOGLE_AI_KEY: window.ENV?.GOOGLE_AI_KEY || "",
 
     // 2. Netcore Cloud API
     NETCORE_CE_API_KEY: window.ENV?.NETCORE_CE_API_KEY || "",

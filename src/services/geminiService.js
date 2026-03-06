@@ -14,6 +14,13 @@ const GeminiService = {
         this.multimodalModel = localStorage.getItem('openrouter_multimodal_model') || window.APP_CONFIG?.OPENROUTER_MULTIMODAL_MODEL || 'nvidia/nemotron-nano-12b-v2-vl:free';
         this.secondaryMultimodalModel = localStorage.getItem('openrouter_multimodal_secondary_model') || window.APP_CONFIG?.OPENROUTER_MULTIMODAL_SECONDARY_MODEL || 'qwen/qwen3-vl-30b-a3b-instruct';
         this.tertiaryMultimodalModel = localStorage.getItem('openrouter_multimodal_tertiary_model') || window.APP_CONFIG?.OPENROUTER_MULTIMODAL_TERTIARY_MODEL || 'google/gemma-3-27b-it:free';
+        this.googleAIKey = localStorage.getItem('google_ai_key') || window.APP_CONFIG?.GOOGLE_AI_KEY || null;
+    },
+
+    setGoogleAIKey(key) {
+        this.googleAIKey = key;
+        localStorage.setItem('google_ai_key', key);
+        if (window.APP_CONFIG) window.APP_CONFIG.GOOGLE_AI_KEY = key;
     },
 
     setOpenRouterKey(key) {
@@ -132,6 +139,50 @@ CROSS-CHECK & GROUNDING INSTRUCTIONS:
             return { success: true, text, source: 'openrouter', model };
         };
 
+        const makeGoogleRequest = async (prompt, attachments) => {
+            const googleKey = this.googleAIKey || window.APP_CONFIG?.GOOGLE_AI_KEY;
+            if (!googleKey) throw new Error('No Google AI Key for backup');
+
+            console.log(`[AI] Attempting Safety Fallback: Native Google Gemini...`);
+
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${googleKey}`;
+
+            const contents = [];
+            const parts = [{ text: typeof prompt === 'string' ? prompt : JSON.stringify(prompt) }];
+
+            if (attachments?.length > 0) {
+                attachments.forEach(file => {
+                    parts.push({
+                        inlineData: {
+                            mimeType: file.mimeType,
+                            data: file.data
+                        }
+                    });
+                });
+            }
+
+            contents.push({ parts });
+
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents,
+                    systemInstruction: { parts: [{ text: unifiedSystemInstruction }] }
+                }),
+                signal: AbortSignal.timeout(30000)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`Google AI Error: ${errorData.error?.message || response.status}`);
+            }
+
+            const data = await response.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            return { success: true, text, source: 'google-native', model: 'gemini-1.5-flash' };
+        };
+
         const primaryModel = this.openRouterModel || 'google/gemma-3-27b-it:free';
         const multimodal1 = this.multimodalModel || 'nvidia/nemotron-nano-12b-v2-vl:free';
         const multimodal2 = this.secondaryMultimodalModel || 'google/gemini-2.5-flash-lite';
@@ -161,17 +212,25 @@ CROSS-CHECK & GROUNDING INSTRUCTIONS:
             } catch (error) {
                 console.error(`[AI] Model ${modelToTry} failed:`, error.message);
                 lastError = error;
-                // If it's a 401/403, don't bother retrying
-                if (error.message.includes('401') || error.message.includes('403') || error.message.includes('Unauthorized')) {
+                // If it's a 401/403/404 (User not found), consider trying native backup immediately if it's an account error
+                if (error.message.includes('401') || error.message.includes('403') || error.message.includes('Unauthorized') || error.message.includes('User not found')) {
                     break;
                 }
             }
         }
 
-        return {
-            success: false,
-            error: `AI failed via OpenRouter. Attempts: ${uniqueChain.join(' -> ')}. Last error: ${lastError?.message}`
-        };
+        // Final Safety Fallback: Native Google Gemini
+        try {
+            return await makeGoogleRequest(prompt, attachments);
+        } catch (backupError) {
+            console.error(`[AI] Primary chain and Safety Fallback failed.`);
+            return {
+                success: false,
+                error: `AI failed. 
+1. OpenRouter Error: ${lastError?.message}
+2. Backup Gemini Error: ${backupError.message}`
+            };
+        }
     }
 };
 
