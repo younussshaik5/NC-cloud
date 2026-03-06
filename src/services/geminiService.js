@@ -12,8 +12,8 @@ const GeminiService = {
         this.openRouterKey = localStorage.getItem('openrouter_api_key') || window.APP_CONFIG?.OPENROUTER_API_KEY || null;
         this.openRouterModel = localStorage.getItem('openrouter_model') || window.APP_CONFIG?.OPENROUTER_MODEL || 'google/gemma-3-27b-it:free';
         this.multimodalModel = localStorage.getItem('openrouter_multimodal_model') || window.APP_CONFIG?.OPENROUTER_MULTIMODAL_MODEL || 'nvidia/nemotron-nano-12b-v2-vl:free';
-        this.secondaryMultimodalModel = localStorage.getItem('openrouter_multimodal_secondary_model') || window.APP_CONFIG?.OPENROUTER_MULTIMODAL_SECONDARY_MODEL || 'google/gemini-2.5-flash-lite';
-        this.tertiaryMultimodalModel = localStorage.getItem('openrouter_multimodal_tertiary_model') || window.APP_CONFIG?.OPENROUTER_MULTIMODAL_TERTIARY_MODEL || 'google/gemini-2.5-flash-lite';
+        this.secondaryMultimodalModel = localStorage.getItem('openrouter_multimodal_secondary_model') || window.APP_CONFIG?.OPENROUTER_MULTIMODAL_SECONDARY_MODEL || 'google/gemini-2.0-flash-lite-001';
+        this.tertiaryMultimodalModel = localStorage.getItem('openrouter_multimodal_tertiary_model') || window.APP_CONFIG?.OPENROUTER_MULTIMODAL_TERTIARY_MODEL || 'google/gemini-flash-1.5';
         this.googleAIKey = localStorage.getItem('google_ai_key') || window.APP_CONFIG?.GOOGLE_AI_KEY || null;
     },
 
@@ -141,7 +141,7 @@ CROSS-CHECK & GROUNDING INSTRUCTIONS:
 
         const makeGoogleRequest = async (prompt, attachments) => {
             const googleKey = this.googleAIKey || window.APP_CONFIG?.GOOGLE_AI_KEY;
-            if (!googleKey) throw new Error('No Google AI Key for backup');
+            if (!googleKey) throw new Error('Safety Backup Key Missing. Please add a Gemini API Key in Settings > Google AI Studio.');
 
             console.log(`[AI] Attempting Safety Fallback: Native Google Gemini...`);
 
@@ -189,13 +189,14 @@ CROSS-CHECK & GROUNDING INSTRUCTIONS:
         const multimodal3 = this.tertiaryMultimodalModel || 'google/gemini-2.5-flash-lite';
 
         // Chain of models to try (All via OpenRouter)
-        // We always include the paid 'google/gemini-2.5-flash-lite' as the reliable fallback
+        // We always include multiple valid paid models as reliable fallbacks
         const retryChain = [
             this.openRouterModel,
             this.multimodalModel,
             this.secondaryMultimodalModel,
             this.tertiaryMultimodalModel,
-            'google/gemini-2.5-flash-lite' // Mandatory paid fallback
+            'google/gemini-2.0-flash-lite-001', // Paid Fallback 1 (Low Latency)
+            'google/gemini-flash-1.5'          // Paid Fallback 2 (Stable)
         ];
 
         // Deduplicate and filter out empty strings/nulls
